@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     const subs = subsRes.data.data;
     const gifted = subs
       .filter(s => s.is_gift)
-      .map(s => ({ icon: '🎁', text: `${s.gifter_name} — подарил ${s.total} подписок` }));
+      .map(s => ({ icon: '🎁', text: `${s.gifter_name} — ${s.total} шт` }));
 
     const self = subs
       .filter(s => !s.is_gift && s.user_id !== twitchUserId)
