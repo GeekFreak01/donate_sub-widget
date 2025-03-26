@@ -7,26 +7,13 @@ export default function Widget() {
   useEffect(() => {
     fetch('/api/data')
       .then(res => res.json())
-      .then(({ topDonors, giftedSubs, selfSubs }) => {
-        const donationItems = topDonors.map(d => ({
-          icon: d.icon,
-          text: `${d.username} — ${d.total} ${d.currency}`,
-        }));
-        const giftItems = giftedSubs.map(s => ({
-          icon: s.icon,
-          text: `${s.user_name} — подарил ${s.count} подписок`,
-        }));
-        const selfItems = selfSubs.map(s => ({
-          icon: s.icon,
-          text: `${s.user_name} — подписан ${s.months} мес.`,
-        }));
-        setItems([...donationItems, ...giftItems, ...selfItems]);
-      });
+      .then(({ items }) => setItems(items))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => setCurrentIndex(i => (i + 1) % items.length), 5000);
-    return () => clearInterval(id);
+    const interval = setInterval(() => setCurrentIndex(i => (i + 1) % items.length), 5000);
+    return () => clearInterval(interval);
   }, [items]);
 
   if (!items.length) return <div>Загрузка...</div>;
@@ -40,8 +27,8 @@ export default function Widget() {
         </div>
       </div>
       <style jsx>{`
-        @keyframes fadeInOut {0%,100%{opacity:0}10%,90%{opacity:1}}
-        .animate-fade-in-out {animation:fadeInOut 5s ease infinite;}
+        @keyframes fadeInOut { 0%,100%{opacity:0}10%,90%{opacity:1} }
+        .animate-fade-in-out { animation: fadeInOut 5s ease infinite; }
       `}</style>
     </div>
   );
