@@ -1,28 +1,8 @@
-// pages/api/data.js
 import axios from 'axios';
 
-let da_token = null;
 let twitch_token = null;
 
-// Donation Alerts Access Token
-async function getDonationAlertsToken() {
-  if (da_token) return da_token;
-
-  const { data } = await axios.post(
-    'https://www.donationalerts.com/oauth/token',
-    {
-      grant_type: 'client_credentials',
-      client_id: process.env.DA_CLIENT_ID,
-      client_secret: process.env.DA_CLIENT_SECRET,
-      scope: 'oauth-donation-index',
-    }
-  );
-
-  da_token = data.access_token;
-  return da_token;
-}
-
-// Twitch Access Token
+// Получение токена Twitch
 async function getTwitchToken() {
   if (twitch_token) return twitch_token;
 
@@ -36,14 +16,14 @@ async function getTwitchToken() {
 
 export default async function handler(req, res) {
   try {
-    const daToken = await getDonationAlertsToken();
+    const daToken = process.env.DA_ACCESS_TOKEN; // Используем уже полученный вручную токен
     const twitchToken = await getTwitchToken();
 
+    // Получение данных Donation Alerts
     const donations = await axios.get('https://www.donationalerts.com/api/v1/alerts/donations', {
       headers: { Authorization: `Bearer ${daToken}` },
     });
 
-    // За последнюю неделю
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
@@ -52,8 +32,8 @@ export default async function handler(req, res) {
       return donationDate >= oneWeekAgo;
     });
 
-    // Получаем сабов и подарочные сабы (здесь нужен user_id вашего канала Twitch)
-    const twitchUserId = 'Ваш_Twitch_User_ID';
+    // Замените это на ваш реальный Twitch User ID:
+    const twitchUserId = 'ВАШ_TWITCH_USER_ID';
     const subscriptions = await axios.get(
       `https://api.twitch.tv/helix/subscriptions?broadcaster_id=${twitchUserId}`,
       {
