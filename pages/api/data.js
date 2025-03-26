@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     });
 
     // Замените это на ваш реальный Twitch User ID:
-    const twitchUserId = 'ВАШ_TWITCH_USER_ID';
+    const twitchUserId = 'muwra1t07djhuf2pdv73zsw5yh3foj';
     const subscriptions = await axios.get(
       `https://api.twitch.tv/helix/subscriptions?broadcaster_id=${twitchUserId}`,
       {
