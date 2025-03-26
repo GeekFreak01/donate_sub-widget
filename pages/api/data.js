@@ -6,8 +6,7 @@ export default async function handler(req, res) {
     const twitchToken = process.env.TWITCH_ACCESS_TOKEN;
     const twitchUserId = process.env.TWITCH_USER_ID;
 
-    // Запросы выполняются параллельно
-    const [daRes, twitchRes] = await Promise.all([
+    const [daRes, subsRes] = await Promise.all([
       axios.get('https://www.donationalerts.com/api/v1/alerts/donations', {
         headers: { Authorization: `Bearer ${daToken}` }
       }),
@@ -19,27 +18,30 @@ export default async function handler(req, res) {
       })
     ]);
 
-    // Обработка DonationAlerts
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const topDonors = Object.values(
+    const weekAgo = Date.now() - 7*24*60*60*1000;
+    const donors = Object.values(
       daRes.data.data
         .filter(d => new Date(d.created_at).getTime() >= weekAgo)
         .reduce((acc, { username, amount, currency }) => {
-          if (!acc[username]) acc[username] = { icon: '💰', username, total: 0, currency };
-          acc[username].total += amount;
+          if (!acc[username]) acc[username] = { icon: '💰', text: `${username} — ${amount} ${currency}`, total: amount };
+          else acc[username].total += amount;
+          acc[username].text = `${username} — ${acc[username].total} ${currency}`;
           return acc;
         }, {})
-    ).sort((a, b) => b.total - a.total);
+    ).sort((a,b)=>b.total-a.total);
 
-    // Обработка Twitch подписок
-    const subs = twitchRes.data.data;
-    const giftedSubs = subs.filter(s => s.is_gift).map(s => ({ icon: '🎁', user_name: s.user_name, count: s.total }));
-    const selfSubs   = subs.filter(s => !s.is_gift).map(s => ({ icon: '👤', user_name: s.user_name, months: s.cumulative_months }));
+    const subs = subsRes.data.data;
+    const gifted = subs
+      .filter(s => s.is_gift)
+      .map(s => ({ icon: '🎁', text: `${s.user_name} — подарил ${s.total} подписок` }));
+    const self = subs
+      .filter(s => !s.is_gift)
+      .map(s => ({ icon: '👤', text: `${s.user_name} — подписан ${s.cumulative_months} мес.` }));
 
-    return res.status(200).json({ topDonors, giftedSubs, selfSubs });
-  } catch (error) {
-    console.error('API error:', error.response?.data || error.message);
-    const status = error.response?.status || 500;
-    return res.status(status).json({ error: error.response?.data?.message || error.message });
+    const items = [...gifted, ...self, ...donors];
+    return res.status(200).json({ items });
+  } catch(err) {
+    console.error(err.response?.data || err.message);
+    return res.status(err.response?.status || 500).json({ error: err.message });
   }
 }
