@@ -18,30 +18,33 @@ export default async function handler(req, res) {
       })
     ]);
 
-    const weekAgo = Date.now() - 7*24*60*60*1000;
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const donors = Object.values(
       daRes.data.data
         .filter(d => new Date(d.created_at).getTime() >= weekAgo)
         .reduce((acc, { username, amount, currency }) => {
           if (!acc[username]) acc[username] = { icon: '💰', text: `${username} — ${amount} ${currency}`, total: amount };
-          else acc[username].total += amount;
-          acc[username].text = `${username} — ${acc[username].total} ${currency}`;
+          else {
+            acc[username].total += amount;
+            acc[username].text = `${username} — ${acc[username].total} ${currency}`;
+          }
           return acc;
         }, {})
-    ).sort((a,b)=>b.total-a.total);
+    ).sort((a, b) => b.total - a.total);
 
     const subs = subsRes.data.data;
     const gifted = subs
       .filter(s => s.is_gift)
       .map(s => ({ icon: '🎁', text: `${s.user_name} — подарил ${s.total} подписок` }));
+
     const self = subs
-      .filter(s => !s.is_gift)
-      .map(s => ({ icon: '👤', text: `${s.user_name} — подписан ${s.cumulative_months} мес.` }));
+      .filter(s => !s.is_gift && s.user_id !== twitchUserId)
+      .map(s => ({ icon: '👤', text: `${s.user_name} — подписан ${s.cumulative_months ?? 0} мес.` }));
 
     const items = [...gifted, ...self, ...donors];
     return res.status(200).json({ items });
-  } catch(err) {
-    console.error(err.response?.data || err.message);
+  } catch (err) {
+    console.error('Error in /api/data:', err.response?.data || err.message);
     return res.status(err.response?.status || 500).json({ error: err.message });
   }
 }
