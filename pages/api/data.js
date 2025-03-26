@@ -33,9 +33,19 @@ export default async function handler(req, res) {
     ).sort((a, b) => b.total - a.total);
 
     const subs = subsRes.data.data;
-    const gifted = subs
-      .filter(s => s.is_gift)
-      .map(s => ({ icon: '🎁', text: `${s.gifter_name} — ${s.total} шт` }));
+
+    // Группировка подарочных подписок по дарителю
+    const gifted = Object.values(
+      subs
+        .filter(s => s.is_gift)
+        .reduce((acc, s) => {
+          const name = s.gifter_name;
+          if (!acc[name]) acc[name] = { icon: '🎁', text: '', count: 0 };
+          acc[name].count += 1;
+          acc[name].text = `${name} — ${acc[name].count} шт`;
+          return acc;
+        }, {})
+    );
 
     const self = subs
       .filter(s => !s.is_gift && s.user_id !== twitchUserId)
