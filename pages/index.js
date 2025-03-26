@@ -1,3 +1,4 @@
+// pages/index.js
 import { useEffect, useState } from 'react';
 
 export default function Widget() {
@@ -12,23 +13,57 @@ export default function Widget() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => setCurrentIndex(i => (i + 1) % items.length), 5000);
+    const interval = setInterval(() => setCurrentIndex(i => (i + 1) % items.length), 4000);
     return () => clearInterval(interval);
   }, [items]);
 
-  if (!items.length) return <div>Загрузка...</div>;
+  if (!items.length) return <div className="loading">Загрузка...</div>;
 
   return (
-    <div className="h-screen flex items-center justify-center bg-transparent">
-      <div className="relative bg-white rounded-2xl px-6 py-3 shadow-lg" style={{ boxShadow: '10px 10px 0 rgba(68,0,102,0.8)' }}>
-        <div key={currentIndex} className="animate-fade-in-out">
-          <span className="mr-2">{items[currentIndex].icon}</span>
-          {items[currentIndex].text}
-        </div>
+    <div className="widget-container">
+      <div key={currentIndex} className="item animate-fade-in-out">
+        <span className="icon">{items[currentIndex].icon}</span>
+        <span className="text">{items[currentIndex].text}</span>
       </div>
+
       <style jsx>{`
-        @keyframes fadeInOut { 0%,100%{opacity:0}10%,90%{opacity:1} }
-        .animate-fade-in-out { animation: fadeInOut 5s ease infinite; }
+        .widget-container {
+          width: 320px;
+          height: 50px;
+          background: #ffffff;
+          border-radius: 16px;
+          box-shadow: 4px 4px 0px rgba(68, 0, 102, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          font-family: 'Comic Sans MS', Comic Sans, cursive;
+        }
+        .item {
+          display: flex;
+          align-items: center;
+          font-size: 14px;
+          white-space: nowrap;
+        }
+        .icon {
+          margin-right: 8px;
+          font-size: 18px;
+        }
+        .loading {
+          width: 320px;
+          height: 50px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Comic Sans MS', Comic Sans, cursive;
+        }
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0; }
+          10%, 90% { opacity: 1; }
+        }
+        .animate-fade-in-out {
+          animation: fadeInOut 4s ease infinite;
+        }
       `}</style>
     </div>
   );
