@@ -1,50 +1,70 @@
-import axios from 'axios';
+// pages/index.js
+import { useEffect, useState } from 'react';
 
-export default async function handler(req, res) {
-  try {
-    const daToken = process.env.DA_ACCESS_TOKEN;
-    const twitchToken = process.env.TWITCH_ACCESS_TOKEN;
-    const twitchUserId = process.env.TWITCH_USER_ID;
+export default function Widget() {
+  const [items, setItems] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-    const [daRes, subsRes] = await Promise.all([
-      axios.get('https://www.donationalerts.com/api/v1/alerts/donations', {
-        headers: { Authorization: `Bearer ${daToken}` }
-      }),
-      axios.get(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${twitchUserId}`, {
-        headers: {
-          'Client-ID': process.env.TWITCH_CLIENT_ID,
-          Authorization: `Bearer ${twitchToken}`
+  useEffect(() => {
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(({ items }) => setItems(items))
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentIndex(i => (i + 1) % items.length), 4000);
+    return () => clearInterval(interval);
+  }, [items]);
+
+  if (!items.length) return <div className="loading">Загрузка...</div>;
+
+  return (
+    <div className="widget-container">
+      <div key={currentIndex} className="item animate-fade-in-out">
+        <span className="icon">{items[currentIndex].icon}</span>
+        <span className="text">{items[currentIndex].text}</span>
+      </div>
+
+      <style jsx>{`
+        .widget-container {
+          width: 320px;
+          height: 50px;
+          background: #ffffff;
+          border-radius: 16px;
+          box-shadow: 4px 4px 0px rgba(68, 0, 102, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          font-family: 'Comic Sans MS', Comic Sans, cursive;
         }
-      })
-    ]);
-
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const donors = Object.values(
-      daRes.data.data
-        .filter(d => new Date(d.created_at).getTime() >= weekAgo)
-        .reduce((acc, { username, amount, currency }) => {
-          if (!acc[username]) acc[username] = { icon: '💰', text: `${username} — ${amount} ${currency}`, total: amount };
-          else {
-            acc[username].total += amount;
-            acc[username].text = `${username} — ${acc[username].total} ${currency}`;
-          }
-          return acc;
-        }, {})
-    ).sort((a, b) => b.total - a.total);
-
-    const subs = subsRes.data.data;
-    const gifted = subs
-      .filter(s => s.is_gift)
-      .map(s => ({ icon: '🎁', text: `${s.gifter_name} — подарил ${s.total} подписок` }));
-
-    const self = subs
-      .filter(s => !s.is_gift && s.user_id !== twitchUserId)
-      .map(s => ({ icon: '👤', text: `${s.user_name} — подписан ${s.cumulative_months ?? 0} мес.` }));
-
-    const items = [...gifted, ...self, ...donors];
-    return res.status(200).json({ items });
-  } catch (err) {
-    console.error('Error in /api/data:', err.response?.data || err.message);
-    return res.status(err.response?.status || 500).json({ error: err.message });
-  }
+        .item {
+          display: flex;
+          align-items: center;
+          font-size: 14px;
+          white-space: nowrap;
+        }
+        .icon {
+          margin-right: 8px;
+          font-size: 18px;
+        }
+        .loading {
+          width: 320px;
+          height: 50px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Comic Sans MS', Comic Sans, cursive;
+        }
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0; }
+          10%, 90% { opacity: 1; }
+        }
+        .animate-fade-in-out {
+          animation: fadeInOut 4s ease infinite;
+        }
+      `}</style>
+    </div>
+  );
 }
