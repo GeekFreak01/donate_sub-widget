@@ -34,6 +34,8 @@ export default function Widget() {
       </div>
 
       <style jsx>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
+
         .widget-container {
           width: 320px;
           height: 50px;
@@ -44,7 +46,8 @@ export default function Widget() {
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          font-family: 'Comic Sans MS', cursive;
+          font-family: 'Inter', sans-serif;
+          font-weight: 900;
         }
         .item {
           display: flex;
@@ -66,7 +69,8 @@ export default function Widget() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Comic Sans MS', cursive;
+          font-family: 'Inter', sans-serif;
+          font-weight: 900;
         }
         @keyframes fadeInOut {
           0%, 100% { opacity: 0; }
